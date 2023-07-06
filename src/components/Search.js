@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 import UseDebounce from "./useDebounce.js";
+import InfiniteScroll from "react-infinite-scroll-component";
 
 const Search = () => {
   const [data, setData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState("dickens");
 
-  const handleSearch = async (e) => {
-    const value = e.target.value;
-    console.log(value);
+  const fetchBooks = async () => {
     try {
       const response = await fetch(
-        `https://gutendex.com/books/?search=${value}%20great`
+        `https://gutendex.com/books/?search=${query}&page=${page}`
       );
       const data = await response.json();
-      console.log(data);
 
       // Extract the required data from the response
       const newData = data.results.map((result) => ({
@@ -24,41 +24,57 @@ const Search = () => {
       }));
 
       // Append new data to the existing 'data' state
-      setData((prevData) => [...prevData, ...newData]);
+      setData((prev) => [...prev, ...newData]);
 
       // Check if there is more data to load
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
-  const debouncedSearch = UseDebounce(handleSearch, 300);
+  const debouncedSearch = UseDebounce(fetchBooks, 800);
+  useEffect(() => {
+    debouncedSearch();
+  }, [page]);
+
+  const handelInfiniteScroll = async () => {
+    try {
+      if (
+        window.innerHeight + document.documentElement.scrollTop + 1 >=
+        document.documentElement.scrollHeight
+      ) {
+        setPage((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("scroll", handelInfiniteScroll);
+    return () => window.removeEventListener("scroll", handelInfiniteScroll);
+  }, []);
 
   return (
     <div>
       <div className="search-bar">
         <input
+          onChange={(e) => setQuery(e.target.value)}
           onKeyUp={debouncedSearch}
-          placeholder="Type Book Authour"
+          placeholder="Type Book Or Author Name"
         ></input>
       </div>
 
-      <div>
-        <div className="grid-container">
-          {data.map((book, index) => (
-            <div key={index} className="book-item">
-              <img
-                src={book.imageUrl}
-                alt={book.title}
-                className="book-image"
-              />
-              <h3 className="book-title">{book.title}</h3>
-              <p className="book-author">By: {book.author}</p>
-              <p className="book-download-count">
-                Downloads: {book.downloadCount}
-              </p>
-            </div>
-          ))}
-        </div>
+      <div className="grid-container">
+        {data.map((book, index) => (
+          <div key={index} className="book-item">
+            <img src={book.imageUrl} alt={book.title} className="book-image" />
+            <h3 className="book-title">{book.title}</h3>
+            <p className="book-author">By: {book.author}</p>
+            <p className="book-download-count">
+              Downloads: {book.downloadCount}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
