@@ -13,7 +13,7 @@ const Search = () => {
       );
       const data = await response.json();
       if (data) {
-        setData([]);
+        // setData([])
         setLoading(false);
       }
       // Extract the required data from the response
