@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from "react";
 import UseDebounce from "./useDebounce.js";
-import InfiniteScroll from "react-infinite-scroll-component";
 
 const Search = () => {
   const [data, setData] = useState([]);
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("dickens");
-
+  const [loading, setLoading] = useState(true);
   const fetchBooks = async () => {
     try {
       const response = await fetch(
         `https://gutendex.com/books/?search=${query}&page=${page}`
       );
       const data = await response.json();
-
+      if (data) {
+        setData([]);
+        setLoading(false);
+      }
       // Extract the required data from the response
       const newData = data.results.map((result) => ({
         id: result.id,
@@ -63,7 +65,7 @@ const Search = () => {
           placeholder="Type Book Or Author Name"
         ></input>
       </div>
-
+      {loading && <h3>Loading {query}...</h3>}
       <div className="grid-container">
         {data.map((book, index) => (
           <div key={index} className="book-item">
